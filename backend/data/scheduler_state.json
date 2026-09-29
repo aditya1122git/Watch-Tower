@@ -1,0 +1,42 @@
+{
+  "total_runs": 114,
+  "total_new_items_today": 109,
+  "platforms": {
+    "facebook": {
+      "status": "Current",
+      "last_updated": "2026-09-28T09:13:27.292733+00:00",
+      "next_refresh": "2026-09-29T04:23:23.284126+00:00",
+      "last_successful_update": "2026-09-28T09:13:27.292733+00:00",
+      "last_error": null,
+      "items_fetched": 0,
+      "new_saved": 0
+    },
+    "instagram": {
+      "status": "Current",
+      "last_updated": "2026-09-28T09:13:27.292733+00:00",
+      "next_refresh": "2026-09-29T04:23:23.284126+00:00",
+      "last_successful_update": "2026-09-28T09:13:27.292733+00:00",
+      "last_error": null,
+      "items_fetched": 0,
+      "new_saved": 0
+    },
+    "other": {
+      "status": "Current",
+      "last_updated": "2026-09-29T03:33:29.817554+00:00",
+      "next_refresh": "2026-09-29T03:43:29.817554+00:00",
+      "last_successful_update": "2026-09-29T03:33:29.817554+00:00",
+      "last_error": null,
+      "items_fetched": 54,
+      "new_saved": 2
+    },
+    "telegram": {
+      "status": "Current",
+      "last_updated": "2026-09-29T03:35:59.978258+00:00",
+      "next_refresh": null,
+      "last_successful_update": "2026-09-29T03:35:59.978258+00:00",
+      "last_error": null,
+      "items_fetched": 0,
+      "new_saved": 0
+    }
+  }
+}

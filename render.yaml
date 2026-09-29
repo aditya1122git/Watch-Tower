@@ -1,0 +1,49 @@
+services:
+  # 1. Backend Web Service (FastAPI - Python 3.12)
+  - type: web
+    name: bihar-watchtower-backend
+    env: python
+    region: singapore
+    plan: free
+    rootDir: backend
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.0
+      - key: ENV
+        value: production
+      - key: DEBUG
+        value: "False"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        value: sqlite+aiosqlite:///./social_watchtower.db
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_CHAT_ID
+        sync: false
+      - key: FAST2SMS_API_KEY
+        sync: false
+
+  # 2. Frontend Web Service (React Vite SPA)
+  - type: web
+    name: bihar-watchtower-frontend
+    env: static
+    region: singapore
+    plan: free
+    rootDir: frontend
+    buildCommand: "npm install && npm run build"
+    staticPublishPath: ./dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: bihar-watchtower-backend
+          property: host

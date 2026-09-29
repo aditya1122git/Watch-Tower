@@ -1,0 +1,267 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   POPPINS as the global font
+   ============================================================ */
+:root {
+  font-family: 'Poppins', 'Noto Sans Devanagari', sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+
+  /* Design tokens */
+  --wt-ink:        #172033;
+  --wt-muted:      #68758a;
+  --wt-line:       #e5eaf2;
+  --wt-surface:    rgba(255, 255, 255, 0.92);
+  --wt-accent:     #e5484d;
+  --wt-blue:       #1769e0;
+  --wt-radius:     1rem;
+}
+
+/* Legacy aliases kept for components that still use them */
+:root {
+  --watchtower-ink:     var(--wt-ink);
+  --watchtower-muted:   var(--wt-muted);
+  --watchtower-line:    var(--wt-line);
+  --watchtower-surface: var(--wt-surface);
+  --watchtower-accent:  var(--wt-accent);
+  --watchtower-blue:    var(--wt-blue);
+}
+
+html {
+  min-width: 320px;
+  background: #f4f7fb;
+  color: var(--wt-ink);
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  font-family: 'Poppins', 'Noto Sans Devanagari', sans-serif !important;
+  background:
+    radial-gradient(circle at 9% 0%,  rgba(23, 105, 224, 0.08), transparent 27rem),
+    radial-gradient(circle at 92% 8%, rgba(229, 72, 77, 0.07),  transparent 24rem),
+    #f4f7fb;
+  color: var(--wt-ink);
+}
+
+/* Override Bootstrap's default font-family to Poppins */
+*,
+*::before,
+*::after,
+button,
+input,
+select,
+textarea,
+.btn,
+.form-control,
+.nav-link,
+.navbar-brand,
+h1, h2, h3, h4, h5, h6,
+.h1, .h2, .h3, .h4, .h5, .h6 {
+  font-family: 'Poppins', 'Noto Sans Devanagari', sans-serif !important;
+}
+
+button, a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+::selection {
+  color: #fff;
+  background: var(--wt-blue);
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* ============================================================
+   DARK MODE
+   ============================================================ */
+.dark html,
+.dark body {
+  background: #0c1220;
+}
+
+.dark body {
+  background:
+    radial-gradient(circle at 10% 0%, rgba(23, 105, 224, 0.14), transparent 27rem),
+    radial-gradient(circle at 90% 8%, rgba(229, 72, 77, 0.1),  transparent 24rem),
+    #0c1220;
+}
+
+/* ============================================================
+   LOGIN SHELL — full-screen background
+   ============================================================ */
+.login-shell {
+  background:
+    linear-gradient(135deg, rgba(7, 13, 28, 0.98), rgba(26, 14, 38, 0.98)),
+    repeating-linear-gradient(
+      135deg,
+      rgba(255,255,255,0.025) 0 1px,
+      transparent 1px 20px
+    );
+  min-height: 100vh;
+}
+
+/* ============================================================
+   LOGIN CARD
+   ============================================================ */
+.login-card {
+  box-shadow:
+    0 32px 80px rgba(2, 6, 20, 0.55),
+    0 0 0 1px rgba(255,255,255,0.06) inset !important;
+  backdrop-filter: blur(2px);
+  border: 1px solid rgba(255,255,255,0.08) !important;
+}
+
+/* Hero gradient panel inside the card */
+.login-hero {
+  background-image:
+    linear-gradient(120deg, rgba(140, 20, 60, 0.95), rgba(35, 40, 140, 0.95)),
+    repeating-linear-gradient(
+      135deg,
+      rgba(255,255,255,0.07) 0 1px,
+      transparent 1px 18px
+    );
+  position: relative;
+  overflow: hidden;
+}
+
+.login-hero::after {
+  content: '';
+  position: absolute;
+  bottom: -1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6rem;
+  height: 6rem;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(229,72,77,0.25), transparent 70%);
+  pointer-events: none;
+}
+
+/* ============================================================
+   INPUTS — polished focus ring
+   ============================================================ */
+.login-card input,
+.login-card .form-control {
+  min-height: 48px;
+  font-family: 'Poppins', sans-serif !important;
+  font-size: 0.875rem;
+  border-radius: 0.75rem !important;
+  border: 1.5px solid #dde3ef !important;
+  background-color: #f8fafc !important;
+  color: #172033 !important;
+  transition:
+    border-color 180ms ease,
+    box-shadow   180ms ease,
+    background-color 180ms ease;
+}
+
+.login-card input:focus,
+.login-card .form-control:focus {
+  border-color: #e5484d !important;
+  box-shadow: 0 0 0 3px rgba(229, 72, 77, 0.15) !important;
+  background-color: #fff !important;
+  outline: none !important;
+}
+
+.dark .login-card input,
+.dark .login-card .form-control {
+  background-color: #182235 !important;
+  border-color: #2e3d56 !important;
+  color: #e8eef8 !important;
+}
+
+.dark .login-card input:focus,
+.dark .login-card .form-control:focus {
+  background-color: #1d2d48 !important;
+}
+
+/* ============================================================
+   BUTTONS — micro-animation lift
+   ============================================================ */
+.login-card .btn,
+.login-card button:not(:disabled) {
+  transition:
+    transform    160ms ease,
+    box-shadow   160ms ease,
+    background-color 160ms ease;
+}
+
+.login-card .btn:hover:not(:disabled),
+.login-card button:not(:disabled):hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+}
+
+.login-card .btn:active:not(:disabled),
+.login-card button:not(:disabled):active {
+  transform: translateY(0);
+}
+
+/* ============================================================
+   SLOT INDICATORS
+   ============================================================ */
+.slot-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+/* ============================================================
+   UTILITY OVERRIDES (keep Tailwind classes consistent)
+   ============================================================ */
+.shadow-sm {
+  box-shadow: 0 8px 24px rgba(27, 39, 66, 0.06) !important;
+}
+
+.rounded-2xl {
+  border-radius: 1rem !important;
+}
+
+@media (max-width: 767.98px) {
+  .rounded-2xl {
+    border-radius: 0.85rem !important;
+  }
+  .login-card {
+    border-radius: 1.25rem !important;
+  }
+  .login-hero h1 {
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+}
+
+/* ============================================================
+   FADE-IN ANIMATION FOR CARD
+   ============================================================ */
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(24px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+
+.login-card {
+  animation: fadeSlideUp 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Slide-up toast */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.3s ease both;
+}
+
+/* Ping pulse for live dot */
+@keyframes ping {
+  75%, 100% { transform: scale(2); opacity: 0; }
+}
+.animate-ping { animation: ping 1s cubic-bezier(0,0,0.2,1) infinite; }

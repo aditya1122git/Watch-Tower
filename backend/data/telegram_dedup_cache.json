@@ -1,0 +1,32 @@
+{
+  "known_ids": [
+    "test_msg_1790586839_new",
+    "test_msg_1790586981606",
+    "test_msg_1790586839",
+    "test_msg_1790587143527",
+    "test_msg_1790587143527_new",
+    "test_msg_1790587000276",
+    "test_msg_1790587000276_new"
+  ],
+  "known_hashes": [
+    "0b45e2f95cd16df93785dd424489e9d96d21441b6348292a070b291c0c159057",
+    "79bb77a20f38cfeff9e90ecbd5445ba8d71c9048716215ab4d90dc5e53c09f04",
+    "051516012eb2601d95a3ddcd261b646b83f1985d49dc7652d4b3d6b88569345a",
+    "1d158b6635ef0f4293f12dd5a8342046ec81eb40298e64b2a642eeed6d846711",
+    "5bfeee42889208dde4412a654152080cc89f8b8273ac0de794fc163e402e8feb",
+    "58f242f69dbd6c6ef22200bbf2b5a5f1ddb985d5ccb69b2e471057de45ad379b",
+    "3d30f73a7ea03498ddea682d48e8c48e814e661319f1c8f7a2400ae029af3cce"
+  ],
+  "known_urls": [
+    "https://t.me/bihargovt/test_msg_1790586839_new",
+    "https://t.me/bihargovt/test_msg_1790586981606",
+    "https://t.me/bihargovt/test_msg_1790587000276_new",
+    "https://t.me/bihargovt/test_msg_1790587143527_new",
+    "https://t.me/bihargovt/test_msg_1790586839",
+    "https://t.me/bihargovt/test_msg_1790587143527",
+    "https://t.me/bihargovt/test_msg_1790587000276"
+  ],
+  "duplicates_ignored_count": 6,
+  "new_updates_count": 7,
+  "last_new_update_at": "2026-09-28T09:19:03.527325+00:00"
+}

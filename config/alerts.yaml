@@ -1,0 +1,37 @@
+# Alerts configuration
+
+critical_thresholds:
+  negative_comments:
+    enabled: true
+    base_threshold: 500
+    milestone_step: 500  # fires at 500, 1000, 1500, 2000, etc.
+
+velocity_thresholds:
+  negative_comment_burst:
+    enabled: true
+    threshold_count: 100
+    window_minutes: 30
+  reach_spike_negative_post:
+    enabled: true
+    reach_multiplier: 3.0
+  negative_share_threshold:
+    enabled: true
+    min_total_comments: 50
+    percentage: 60.0
+
+coordinated_activity:
+  enabled: true
+  similarity_threshold: 0.82
+  min_duplicate_group: 5
+  time_window_minutes: 20
+  burst_new_accounts_ratio: 0.70
+
+delivery:
+  in_app_sse: true
+  webhook:
+    enabled: false
+    url: ""
+    channel_type: "slack" # slack | telegram | generic
+  email:
+    enabled: false
+    recipients: []

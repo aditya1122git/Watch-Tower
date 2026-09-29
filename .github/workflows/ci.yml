@@ -1,0 +1,41 @@
+name: Social Watchtower CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+        cache: "pip"
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r backend/requirements.txt
+
+    - name: Run Pytest Suite with Coverage
+      env:
+        DATABASE_URL: sqlite+aiosqlite:///:memory:
+        HASH_SALT: test-ci-salt-2026
+        COMMENT_RETENTION_DAYS: 90
+        PYTHONPATH: backend
+      run: |
+        cd backend
+        pytest --cov=app --cov-report=term-missing
