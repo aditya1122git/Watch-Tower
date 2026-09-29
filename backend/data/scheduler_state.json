@@ -1,11 +1,11 @@
 {
-  "total_runs": 116,
-  "total_new_items_today": 109,
+  "total_runs": 192,
+  "total_new_items_today": 137,
   "platforms": {
     "facebook": {
       "status": "Current",
       "last_updated": "2026-09-28T09:13:27.292733+00:00",
-      "next_refresh": "2026-09-29T04:23:23.284126+00:00",
+      "next_refresh": "2026-09-29T06:58:28.380821+00:00",
       "last_successful_update": "2026-09-28T09:13:27.292733+00:00",
       "last_error": null,
       "items_fetched": 0,
@@ -14,7 +14,7 @@
     "instagram": {
       "status": "Current",
       "last_updated": "2026-09-28T09:13:27.292733+00:00",
-      "next_refresh": "2026-09-29T04:23:23.284126+00:00",
+      "next_refresh": "2026-09-29T06:58:28.380821+00:00",
       "last_successful_update": "2026-09-28T09:13:27.292733+00:00",
       "last_error": null,
       "items_fetched": 0,
@@ -22,18 +22,18 @@
     },
     "other": {
       "status": "Current",
-      "last_updated": "2026-09-29T03:33:29.817554+00:00",
-      "next_refresh": "2026-09-29T03:43:29.817554+00:00",
-      "last_successful_update": "2026-09-29T03:33:29.817554+00:00",
+      "last_updated": "2026-09-29T05:58:33.561365+00:00",
+      "next_refresh": "2026-09-29T06:08:33.561365+00:00",
+      "last_successful_update": "2026-09-29T05:58:33.561365+00:00",
       "last_error": null,
-      "items_fetched": 54,
-      "new_saved": 2
+      "items_fetched": 69,
+      "new_saved": 11
     },
     "telegram": {
       "status": "Current",
-      "last_updated": "2026-09-29T03:38:05.059033+00:00",
+      "last_updated": "2026-09-29T06:07:39.522398+00:00",
       "next_refresh": null,
-      "last_successful_update": "2026-09-29T03:38:05.059033+00:00",
+      "last_successful_update": "2026-09-29T06:07:39.522398+00:00",
       "last_error": null,
       "items_fetched": 0,
       "new_saved": 0
