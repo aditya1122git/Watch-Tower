@@ -1,6 +1,13 @@
 import { Post, Comment, Alert, OverviewStats, PlatformRefreshStatus } from './types';
 const getApiBase = (): string => {
-  if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
+  let customUrl = import.meta.env.VITE_API_URL;
+  if (customUrl) {
+    customUrl = customUrl.trim().replace(/\/+$/, '');
+    if (!customUrl.endsWith('/api/v1')) {
+      customUrl = `${customUrl}/api/v1`;
+    }
+    return customUrl;
+  }
   if (typeof window !== 'undefined' && window.location) {
     const host = window.location.hostname || 'localhost';
     const protocol = window.location.protocol || 'http:';

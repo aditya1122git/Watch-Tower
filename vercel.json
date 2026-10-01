@@ -4,6 +4,7 @@
   "framework": "vite",
   "installCommand": "cd frontend && npm install",
   "rewrites": [
+    { "source": "/api/v1/(.*)", "destination": "http://187.126.115.197:8000/api/v1/$1" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
