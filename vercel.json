@@ -1,8 +1,8 @@
 {
-  "buildCommand": "cd frontend && npx tsc && npx vite build",
+  "buildCommand": "cd frontend && npm run build",
   "outputDirectory": "frontend/dist",
   "framework": "vite",
-  "installCommand": "cd frontend && npm install --foreground-scripts",
+  "installCommand": "cd frontend && npm install",
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ]

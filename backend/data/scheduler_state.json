@@ -1,39 +1,39 @@
 {
-  "total_runs": 205,
-  "total_new_items_today": 146,
+  "total_runs": 282,
+  "total_new_items_today": 182,
   "platforms": {
     "facebook": {
       "status": "Current",
-      "last_updated": "2026-09-28T09:13:27.292733+00:00",
-      "next_refresh": "2026-09-29T06:58:28.380821+00:00",
-      "last_successful_update": "2026-09-28T09:13:27.292733+00:00",
+      "last_updated": "2026-09-29T06:58:31.896995+00:00",
+      "next_refresh": "2026-09-29T08:18:31.896995+00:00",
+      "last_successful_update": "2026-09-29T06:58:31.896995+00:00",
       "last_error": null,
-      "items_fetched": 0,
-      "new_saved": 0
+      "items_fetched": 10,
+      "new_saved": 10
     },
     "instagram": {
       "status": "Current",
-      "last_updated": "2026-09-28T09:13:27.292733+00:00",
-      "next_refresh": "2026-09-29T06:58:28.380821+00:00",
-      "last_successful_update": "2026-09-28T09:13:27.292733+00:00",
+      "last_updated": "2026-09-29T06:58:31.896995+00:00",
+      "next_refresh": "2026-09-29T08:18:31.896995+00:00",
+      "last_successful_update": "2026-09-29T06:58:31.896995+00:00",
       "last_error": null,
-      "items_fetched": 0,
-      "new_saved": 0
+      "items_fetched": 10,
+      "new_saved": 9
     },
     "other": {
       "status": "Current",
-      "last_updated": "2026-09-29T06:18:34.901918+00:00",
-      "next_refresh": "2026-09-29T06:28:34.901918+00:00",
-      "last_successful_update": "2026-09-29T06:18:34.901918+00:00",
+      "last_updated": "2026-09-29T07:18:37.468589+00:00",
+      "next_refresh": "2026-09-29T07:28:37.468589+00:00",
+      "last_successful_update": "2026-09-29T07:18:37.468589+00:00",
       "last_error": null,
-      "items_fetched": 60,
-      "new_saved": 6
+      "items_fetched": 61,
+      "new_saved": 3
     },
     "telegram": {
       "status": "Current",
-      "last_updated": "2026-09-29T06:18:39.905890+00:00",
+      "last_updated": "2026-09-29T07:28:15.635861+00:00",
       "next_refresh": null,
-      "last_successful_update": "2026-09-29T06:18:39.905890+00:00",
+      "last_successful_update": "2026-09-29T07:28:15.635861+00:00",
       "last_error": null,
       "items_fetched": 0,
       "new_saved": 0
