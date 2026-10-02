@@ -171,3 +171,15 @@ async def send_test_telegram_alert(req: TelegramTestRequest) -> Dict[str, Any]:
         chat_id=req.target_chat_id
     )
     return res
+
+@router.post("/dispatch-negative-alerts")
+async def dispatch_negative_alerts(
+    limit: int = 15,
+    db: AsyncSession = Depends(get_db)
+) -> Dict[str, Any]:
+    """
+    Sweeps database for unalerted negative posts and dispatches alerts directly to Telegram with post links.
+    """
+    res = await telegram_alert_service.sweep_and_dispatch_pending_negative_alerts(db, limit=limit)
+    return res
+

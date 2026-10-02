@@ -477,6 +477,15 @@ export async function sendTestTelegramAlert(params?: { bot_token?: string; targe
   return resp.json();
 }
 
+export async function dispatchNegativeAlerts(limit: number = 20): Promise<any> {
+  const resp = await fetch(`${API_BASE}/telegram/dispatch-negative-alerts?limit=${limit}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' }
+  });
+  if (!resp.ok) throw new Error('Failed to dispatch negative alerts');
+  return resp.json();
+}
+
 // ----------------------------------------------------
 // AUTHENTICATION & 5 CONCURRENT SESSIONS MANAGEMENT
 // ----------------------------------------------------

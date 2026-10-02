@@ -5,6 +5,7 @@ import {
   sendTestTelegramAlert,
   addTelegramRecipient,
   removeTelegramRecipient,
+  dispatchNegativeAlerts,
   TelegramConfig
 } from '../api';
 import { Language } from '../i18n';
@@ -110,6 +111,30 @@ export const TelegramAlertModal: React.FC<TelegramAlertModalProps> = ({ lang, on
       setTestResult({ status: 'error', error: err.message });
     } finally {
       setTesting(false);
+    }
+  };
+
+  const [dispatching, setDispatching] = useState(false);
+
+  const handleDispatchNegative = async () => {
+    setDispatching(true);
+    setMessage(null);
+    try {
+      const res = await dispatchNegativeAlerts(15);
+      if (res.dispatched_count > 0) {
+        setMessage(lang === 'hi' 
+          ? `सफलतापूर्वक ${res.dispatched_count} नेगेटिव पोस्ट्स के लिंक टेलीग्राम पर भेज दिए गए!`
+          : `Dispatched ${res.dispatched_count} negative posts with links to Telegram!`);
+      } else {
+        setMessage(lang === 'hi' 
+          ? 'कोई नया नेगेटिव पोस्ट लंबित नहीं है (सभी अलर्ट्स पहले ही भेजे जा चुके हैं)।'
+          : 'No pending unalerted negative posts found.');
+      }
+      loadConfig();
+    } catch (err: any) {
+      setMessage(`Error: ${err.message}`);
+    } finally {
+      setDispatching(false);
     }
   };
 
@@ -391,23 +416,39 @@ export const TelegramAlertModal: React.FC<TelegramAlertModalProps> = ({ lang, on
         </div>
 
         {/* Footer Actions */}
-        <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0">
-          <button
-            onClick={handleSendTest}
-            disabled={testing}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold shadow-md transition-all disabled:opacity-50 cursor-pointer"
-          >
-            <Send className={`w-4 h-4 ${testing ? 'animate-spin' : ''}`} />
-            <span>
-              {testing
-                ? (lang === 'hi' ? 'अलर्ट भेजा जा रहा है...' : 'Sending Alert...')
-                : (lang === 'hi' ? `⚡ सभी (${recipients.length}) आईडी पर टेस्ट अलर्ट भेजें` : `⚡ Send Test Alert to all (${recipients.length}) IDs`)}
-            </span>
-          </button>
+        <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2 flex-wrap shrink-0">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleSendTest}
+              disabled={testing}
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold shadow-md transition-all disabled:opacity-50 cursor-pointer"
+            >
+              <Send className={`w-4 h-4 ${testing ? 'animate-spin' : ''}`} />
+              <span>
+                {testing
+                  ? (lang === 'hi' ? 'अलर्ट भेजा जा रहा है...' : 'Sending Alert...')
+                  : (lang === 'hi' ? '⚡ टेस्ट अलर्ट भेजें' : '⚡ Send Test Alert')}
+              </span>
+            </button>
+
+            <button
+              onClick={handleDispatchNegative}
+              disabled={dispatching}
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-md transition-all disabled:opacity-50 cursor-pointer"
+              title="Dispatches all pending negative posts with direct links to Telegram"
+            >
+              <Bell className={`w-4 h-4 ${dispatching ? 'animate-bounce' : ''}`} />
+              <span>
+                {dispatching
+                  ? (lang === 'hi' ? 'नेगेटिव अलर्ट भेजे जा रहे हैं...' : 'Dispatching...')
+                  : (lang === 'hi' ? '📢 पेंडिंग नेगेटिव पोस्ट्स भेजें' : '📢 Dispatch Negative Alerts')}
+              </span>
+            </button>
+          </div>
 
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold"
+            className="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold cursor-pointer"
           >
             {lang === 'hi' ? 'बंद करें' : 'Close'}
           </button>

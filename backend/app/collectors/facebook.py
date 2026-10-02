@@ -106,6 +106,8 @@ class FacebookAdapter(BaseCollectorAdapter):
         queries = [
             ("hi", 'site:facebook.com "सम्राट चौधरी" when:4h'),
             ("hi", 'site:facebook.com "Samrat Choudhary" when:4h'),
+            ("hi", 'site:facebook.com "तेजस्वी" "सम्राट चौधरी" when:4h'),
+            ("hi", 'site:facebook.com "सम्राट चौधरी" (विरोध OR इस्तीफा OR हमला OR बयान) when:4h'),
             ("hi", 'site:facebook.com "सम्राट चौधरी" (News4Nation OR "Live Cities" OR "Kashish") when:4h'),
             ("hi", 'site:facebook.com/samratchoudharyofficial when:4h')
         ]
@@ -146,25 +148,34 @@ class FacebookAdapter(BaseCollectorAdapter):
 
                     # Extract author handle if present (e.g. (@samratchoudharyofficial))
                     handle_match = re.search(r'\(@([A-Za-z0-9_.]+)\)', clean_title)
-                    author_handle = handle_match.group(1) if handle_match else "samratchoudharyofficial"
-                    author_name = source_name.replace(" - facebook.com", "").strip()
+                    author_handle = handle_match.group(1) if handle_match else None
 
-                    posted_at = datetime.now(timezone.utc)
-                    if pub_date_str:
-                        try:
-                            posted_at = datetime.strptime(pub_date_str[:25], "%a, %d %b %Y %H:%M:%S").replace(tzinfo=timezone.utc)
-                        except Exception:
-                            pass
+                    raw_source = source_name.replace(" - facebook.com", "").replace("facebook.com", "").strip()
+                    if not raw_source or raw_source.lower() in ("facebook", "facebook public post", ""):
+                        prefix_match = re.match(r'^([A-Za-z0-9\u0900-\u097F\s]{2,30})[\.:\|\-]', clean_title)
+                        if prefix_match and not any(w in prefix_match.group(1).lower() for w in ["bihar", "samrat", "patna"]):
+                            author_name = prefix_match.group(1).strip()
+                        else:
+                            author_name = "Facebook Public Voice"
+                    else:
+                        author_name = raw_source
 
-                    if posted_at < four_hours_ago:
-                        continue
+                    if not author_handle:
+                        author_handle = author_name.lower().replace(" ", "_")[:30]
 
-                    # Create deterministic item ID from link hash
-                    item_id = str(abs(hash(link)))[:16]
                     clean_link = normalize_url(link)
+                    is_official = bool(author_handle and "samratchoudharyofficial" in author_handle.lower() and not any(kw in clean_title.lower() for kw in ["हमला", "विरोध", "इस्तीफा", "scam", "धोखा", "आरोप", "protest"]))
+                    is_opp = any(kw in clean_title.lower() or kw in author_name.lower() for kw in ["तेजस्वी", "yadav", "rjd", "कांग्रेस", "विपक्ष", "आलोचना", "विरोध", "जन सुराज", "प्रशांत किशोर", "धरना", "इस्तीफा", "मुर्दाबाद", "धोखा", "फेल", "लापरवाही", "protest"])
+                    is_news = any(kw in author_name.lower() or kw in clean_title.lower() for kw in ["news", "media", "tv", "patrika", "jagran", "bhaskar", "times", "express", "samachar", "khabar", "live cities", "nation", "tak", "bharat", "portal"])
 
-                    is_news = any(kw in author_name.lower() or kw in clean_title.lower() for kw in ["news", "media", "tv", "patrika", "jagran", "bhaskar", "times", "express", "samachar", "khabar", "live cities"])
-                    author_label = "official" if "samrat" in author_handle.lower() else ("news-media" if is_news else "neutral")
+                    if is_official:
+                        author_label = "official"
+                    elif is_opp:
+                        author_label = "opposition"
+                    elif is_news:
+                        author_label = "news-media"
+                    else:
+                        author_label = "neutral"
 
                     posts.append(
                         RawPostData(

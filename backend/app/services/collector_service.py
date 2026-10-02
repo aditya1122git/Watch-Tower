@@ -237,6 +237,14 @@ class CollectorService:
                 existing_post.comment_count = max(existing_post.comment_count, raw.comment_count)
                 existing_post.last_checked_at = now
                 updated_posts_count += 1
+
+                # If negative and not yet alerted, dispatch Telegram alert
+                if (existing_post.sentiment_verdict == "Negative" or (existing_post.sentiment_score and existing_post.sentiment_score <= -15.0)) and not existing_post.alert_flag:
+                    try:
+                        await telegram_alert_service.dispatch_negative_post_alert(existing_post)
+                        existing_post.alert_flag = True
+                    except Exception as te:
+                        logger.warning(f"Telegram dispatch failed for existing post {existing_post.id}: {te}")
                 continue
 
             # Classify sentiment towards CM Samrat Choudhary
@@ -340,13 +348,21 @@ class CollectorService:
             created_alerts_count += len(new_alerts)
 
             # Dispatch real-time Telegram alert for negative post or critical alert
-            if new_post.sentiment_verdict == "Negative" or len(new_alerts) > 0:
+            if new_post.sentiment_verdict == "Negative" or (new_post.sentiment_score and new_post.sentiment_score <= -15.0) or len(new_alerts) > 0:
                 try:
                     await telegram_alert_service.dispatch_negative_post_alert(new_post)
+                    new_post.alert_flag = True
                 except Exception as te:
                     logger.warning(f"Telegram dispatch failed for post {new_post.id}: {te}")
 
         await db.commit()
+
+        # Sweep and dispatch any remaining unalerted negative posts
+        try:
+            await telegram_alert_service.sweep_and_dispatch_pending_negative_alerts(db, limit=10)
+        except Exception as se:
+            logger.warning(f"Negative alerts sweep warning: {se}")
+
         duration_sec = (datetime.now(timezone.utc) - start_time).total_seconds()
 
         return {

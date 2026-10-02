@@ -237,7 +237,9 @@ class TwitterAdapter(BaseCollectorAdapter):
         queries = [
             ("hi", 'site:x.com "सम्राट चौधरी" when:4h'),
             ("hi", 'site:x.com "Samrat Choudhary" when:4h'),
-            ("hi", 'site:x.com "सम्राट चौधरी" (FIR OR POCSO OR केस OR इस्तीफा) when:4h'),
+            ("hi", 'site:x.com "तेजस्वी" "सम्राट चौधरी" when:4h'),
+            ("hi", 'site:x.com "सम्राट चौधरी" (FIR OR POCSO OR केस OR इस्तीफा OR विरोध) when:4h'),
+            ("hi", 'site:x.com "सम्राट चौधरी" RJD OR विपक्ष OR हमला when:4h'),
             ("en", 'site:x.com "Samrat Choudhary" Bihar when:4h')
         ]
 
@@ -280,9 +282,29 @@ class TwitterAdapter(BaseCollectorAdapter):
                     tweet_match = re.search(r'/status/(\d+)', link)
                     tweet_id = tweet_match.group(1) if tweet_match else str(abs(hash(link)))[:16]
 
-                    # Extract author handle if present (e.g. (@samrat4bjp))
+                    # Extract author handle if present (e.g. (@samrat4bjp) or URL)
                     handle_match = re.search(r'\(@([A-Za-z0-9_]+)\)', clean_title)
-                    author_handle = handle_match.group(1) if handle_match else "samrat4bjp"
+                    url_author_match = re.search(r'(?:twitter\.com|x\.com)/([A-Za-z0-9_]+)/status/', link)
+
+                    if handle_match:
+                        author_handle = handle_match.group(1)
+                    elif url_author_match and url_author_match.group(1).lower() not in ["i", "home", "search"]:
+                        author_handle = url_author_match.group(1)
+                    else:
+                        author_handle = None
+
+                    raw_source = source_name.replace(" - X", "").replace(" - Twitter", "").replace("x.com", "").replace("twitter.com", "").strip()
+                    if not raw_source or raw_source.lower() in ["x (twitter)", "twitter", "x"]:
+                        prefix_match = re.match(r'^([A-Za-z0-9\u0900-\u097F\s]{2,30})[\.:\|\-]', clean_title)
+                        if prefix_match and not any(w in prefix_match.group(1).lower() for w in ["bihar", "samrat", "patna"]):
+                            author_name = prefix_match.group(1).strip()
+                        else:
+                            author_name = "X (Twitter) Public Voice"
+                    else:
+                        author_name = raw_source
+
+                    if not author_handle:
+                        author_handle = author_name.lower().replace(" ", "_")[:30]
 
                     posted_at = datetime.now(timezone.utc)
                     if pub_date_str:
@@ -295,9 +317,18 @@ class TwitterAdapter(BaseCollectorAdapter):
                         continue
 
                     clean_link = normalize_url(link)
-                    is_news = any(kw in source_name.lower() or kw in clean_title.lower() for kw in ["news", "media", "tv", "patrika", "jagran", "bhaskar", "times", "express", "samachar", "khabar", "live cities"])
-                    is_opp = any(kw in author_handle.lower() or kw in clean_title.lower() for kw in ["yadavtejashwi", "rjdforindia", "incbihar", "janata"])
-                    author_label = "official" if author_handle.lower() in ["samrat4bjp", "bjp4bihar"] else ("opposition" if is_opp else ("news-media" if is_news else "neutral"))
+                    is_official = bool(author_handle and author_handle.lower() in ["samrat4bjp", "samratchoudharybjp"] and not any(kw in clean_title.lower() for kw in ["हमला", "विरोध", "इस्तीफा", "scam", "धोखा", "आरोप", "protest"]))
+                    is_opp = any(kw in author_handle.lower() or kw in author_name.lower() or kw in clean_title.lower() for kw in ["yadavtejashwi", "tejaswi", "तेजस्वी", "rjd", "incbihar", "janata", "congress", "विपक्ष", "आलोचना", "विरोध", "जन सुराज", "प्रशांत किशोर", "धरना", "इस्तीफा", "मुर्दाबाद", "धोखा", "फेल", "लापरवाही", "protest"])
+                    is_news = any(kw in source_name.lower() or kw in author_name.lower() or kw in clean_title.lower() for kw in ["news", "media", "tv", "patrika", "jagran", "bhaskar", "times", "express", "samachar", "khabar", "live cities", "nation", "tak", "bharat", "portal", "ani", "pti"])
+
+                    if is_official:
+                        author_label = "official"
+                    elif is_opp:
+                        author_label = "opposition"
+                    elif is_news:
+                        author_label = "news-media"
+                    else:
+                        author_label = "neutral"
 
                     posts.append(
                         RawPostData(

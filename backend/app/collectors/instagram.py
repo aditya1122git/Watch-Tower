@@ -102,8 +102,10 @@ class InstagramAdapter(BaseCollectorAdapter):
         queries = [
             ("hi", 'site:instagram.com "सम्राट चौधरी" when:4h'),
             ("hi", 'site:instagram.com "Samrat Choudhary" when:4h'),
+            ("hi", 'site:instagram.com "तेजस्वी" "सम्राट चौधरी" when:4h'),
+            ("hi", 'site:instagram.com "बिहार सरकार" "सम्राट चौधरी" reel when:4h'),
+            ("hi", 'site:instagram.com "सम्राट चौधरी" विरोध OR बयान OR भाषण when:4h'),
             ("hi", 'site:instagram.com/samrat4bjp when:4h'),
-            ("hi", 'site:instagram.com "सम्राट चौधरी" reel when:4h')
         ]
 
         async with httpx.AsyncClient(timeout=12.0, follow_redirects=True, headers=headers) as client:
@@ -140,10 +142,22 @@ class InstagramAdapter(BaseCollectorAdapter):
 
                     clean_title = self._strip_html(raw_title)
 
-                    # Extract author handle if present (e.g. (@samratchoudharyofficial))
+                    # Extract author handle if present (e.g. (@username))
                     handle_match = re.search(r'\(@([A-Za-z0-9_.]+)\)', clean_title)
-                    author_handle = handle_match.group(1) if handle_match else "samratchoudharyofficial"
-                    author_name = "Samrat Choudhary (Instagram Reel)" if "samrat" in author_handle.lower() else source_name
+                    author_handle = handle_match.group(1) if handle_match else None
+
+                    raw_source = source_name.replace(" - instagram.com", "").replace("instagram.com", "").replace("Instagram", "").strip()
+                    if not raw_source:
+                        prefix_match = re.match(r'^([A-Za-z0-9\u0900-\u097F\s]{2,30})[\.:\|\-]', clean_title)
+                        if prefix_match and not any(w in prefix_match.group(1).lower() for w in ["bihar", "samrat", "patna"]):
+                            author_name = prefix_match.group(1).strip()
+                        else:
+                            author_name = "Instagram Public Creator"
+                    else:
+                        author_name = raw_source
+
+                    if not author_handle:
+                        author_handle = author_name.lower().replace(" ", "_")[:30]
 
                     posted_at = datetime.now(timezone.utc)
                     if pub_date_str:
@@ -158,8 +172,18 @@ class InstagramAdapter(BaseCollectorAdapter):
                     item_id = str(abs(hash(link)))[:16]
                     clean_link = normalize_url(link)
 
-                    is_news = any(kw in author_name.lower() or kw in clean_title.lower() for kw in ["news", "media", "tv", "patrika", "jagran", "bhaskar", "times", "express", "samachar", "khabar", "live cities"])
-                    author_label = "official" if "samrat" in author_handle.lower() else ("news-media" if is_news else "neutral")
+                    is_official = bool(author_handle and author_handle.lower() in ["samrat4bjp", "samratchoudharyofficial"] and not any(kw in clean_title.lower() for kw in ["हमला", "विरोध", "इस्तीफा", "scam", "धोखा", "आरोप", "protest"]))
+                    is_opp = any(kw in clean_title.lower() or kw in author_name.lower() for kw in ["तेजस्वी", "yadav", "rjd", "कांग्रेस", "विपक्ष", "आलोचना", "विरोध", "जन सुराज", "प्रशांत किशोर", "धरना", "इस्तीफा", "मुर्दाबाद", "धोखा", "फेल", "लापरवाही", "protest"])
+                    is_news = any(kw in author_name.lower() or kw in clean_title.lower() for kw in ["news", "media", "tv", "patrika", "jagran", "bhaskar", "times", "express", "samachar", "khabar", "live cities", "nation", "tak", "bharat", "portal"])
+
+                    if is_official:
+                        author_label = "official"
+                    elif is_opp:
+                        author_label = "opposition"
+                    elif is_news:
+                        author_label = "news-media"
+                    else:
+                        author_label = "creator"
 
                     posts.append(
                         RawPostData(

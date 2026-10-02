@@ -290,17 +290,21 @@ class TelegramAlertService:
             "details": results
         }
 
-    async def dispatch_negative_post_alert(self, post) -> Optional[Dict[str, Any]]:
+    async def dispatch_negative_post_alert(self, post, force: bool = False) -> Optional[Dict[str, Any]]:
         """
         Dispatches negative post alert if post has negative sentiment or is flagged,
         deduplicating to avoid repeat alerts for the same post ID.
         """
+        verdict = getattr(post, "sentiment_verdict", None)
+        score = getattr(post, "sentiment_score", 0) or 0
+        neg_comments = getattr(post, "negative_comment_count", 0) or 0
+
         # Determine if this post requires an alert
         is_negative = (
-            getattr(post, "sentiment_verdict", None) in ["Negative", "Needs Review"] or
-            (getattr(post, "sentiment_score", 0) <= -20) or
-            getattr(post, "alert_flag", False) or
-            (getattr(post, "negative_comment_count", 0) >= 20)
+            verdict in ["Negative", "Needs Review"] or
+            score <= -15.0 or
+            neg_comments >= 10 or
+            getattr(post, "alert_flag", False)
         )
 
         if not is_negative:
@@ -315,15 +319,16 @@ class TelegramAlertService:
         post_text = getattr(post, "text", "") or ""
         text_fingerprint = hashlib.sha256(post_text.strip().encode("utf-8", errors="ignore")).hexdigest()[:16]
 
-        # Strict Multi-Level Deduplication to prevent repeat alerts
-        if getattr(post, "alert_flag", False) is True:
-            return None
-        if post_id and post_id in self._alerted_post_ids:
-            return None
-        if clean_url and clean_url in self._alerted_urls:
-            return None
-        if text_fingerprint and text_fingerprint in self._alerted_hashes:
-            return None
+        # Multi-Level Deduplication to prevent repeat spamming of the same post
+        if not force:
+            if getattr(post, "alert_flag", False) is True:
+                return None
+            if post_id and post_id in self._alerted_post_ids:
+                return None
+            if clean_url and clean_url in self._alerted_urls:
+                return None
+            if text_fingerprint and text_fingerprint in self._alerted_hashes:
+                return None
 
         post_data = {
             "id": post_id,
@@ -332,7 +337,9 @@ class TelegramAlertService:
             "author_handle": getattr(post, "author_handle", ""),
             "views": getattr(post, "views", 0),
             "text": post_text,
-            "permalink_url": permalink
+            "permalink_url": permalink,
+            "sentiment_score": score,
+            "top_topic": getattr(post, "top_topic", "Public Reaction")
         }
 
         html_msg = self.format_alert_message_html(post_data)
@@ -366,6 +373,62 @@ class TelegramAlertService:
             self.dispatched_history.pop()
 
         return res
+
+    async def sweep_and_dispatch_pending_negative_alerts(self, db, limit: int = 25) -> Dict[str, Any]:
+        """
+        Scans database for negative posts that haven't been alerted yet,
+        and dispatches real-time Telegram alerts with post links.
+        """
+        from app.models.post import Post
+        from sqlalchemy import select, and_, or_
+
+        query = (
+            select(Post)
+            .where(
+                and_(
+                    or_(
+                        Post.sentiment_verdict == "Negative",
+                        Post.sentiment_score <= -15.0
+                    ),
+                    or_(
+                        Post.alert_flag.is_(False),
+                        Post.alert_flag.is_(None)
+                    )
+                )
+            )
+            .order_by(Post.posted_at.desc())
+            .limit(limit)
+        )
+        res = await db.execute(query)
+        unalerted_posts = res.scalars().all()
+
+        dispatched_count = 0
+        results = []
+
+        for p in unalerted_posts:
+            dispatch_res = await self.dispatch_negative_post_alert(p)
+            if dispatch_res and dispatch_res.get("status") == "success":
+                p.alert_flag = True
+                dispatched_count += 1
+                results.append({
+                    "post_id": p.id,
+                    "platform": p.platform,
+                    "author": p.author_name,
+                    "link": p.permalink_url,
+                    "status": "dispatched"
+                })
+            else:
+                p.alert_flag = True
+
+        if len(unalerted_posts) > 0:
+            await db.commit()
+
+        return {
+            "status": "success",
+            "unalerted_found": len(unalerted_posts),
+            "dispatched_count": dispatched_count,
+            "items": results
+        }
 
     def format_crisis_alert_html(self, alert_data: Dict[str, Any], post_data: Dict[str, Any]) -> str:
         platform_name = self._get_platform_display(post_data.get("platform", "YouTube"))

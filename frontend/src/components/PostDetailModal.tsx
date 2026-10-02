@@ -130,7 +130,7 @@ export const PostDetailModal: React.FC<PostDetailModalProps> = ({ post, lang, on
               <div className="p-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
                 <span className="text-slate-400 block text-[11px] mb-1">Source / Author Stance</span>
                 <span className="capitalize font-semibold text-slate-800 dark:text-slate-200">
-                  {post.author_label === 'news-media' ? '📺 News Channel / Media Bulletin' : post.author_label === 'opposition' ? '🔴 Opposition / Critic' : post.author_label === 'supporter' ? '🟢 Pro-Government / Supporter' : '⚪ Public Citizen'}
+                  {post.author_label === 'news-media' ? '📺 News Channel / Media Bulletin' : post.author_label === 'opposition' ? '🔴 Opposition / Critic' : post.author_label === 'official' ? '🔵 Official Account / Office' : post.author_label === 'creator' ? '🎬 Public Creator / Reel' : post.author_label === 'supporter' ? '🟢 Pro-Government / Supporter' : '⚪ Public Citizen'}
                 </span>
               </div>
               <div className="p-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">

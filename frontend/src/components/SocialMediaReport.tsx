@@ -73,6 +73,7 @@ export const SocialMediaReport: React.FC<SocialMediaReportProps> = ({ lang }) =>
   const accountMap: Record<string, {
     name: string;
     handle: string;
+    label: string;
     platform: string;
     totalPosts: number;
     totalViews: number;
@@ -101,6 +102,7 @@ export const SocialMediaReport: React.FC<SocialMediaReportProps> = ({ lang }) =>
       accountMap[key] = {
         name: p.author_name || cleanHandle,
         handle: p.author_handle || cleanHandle,
+        label: p.author_label || 'neutral',
         platform: p.platform,
         totalPosts: 0,
         totalViews: 0,
@@ -445,11 +447,17 @@ export const SocialMediaReport: React.FC<SocialMediaReportProps> = ({ lang }) =>
                 <div className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 shrink-0">
                   {getPlatformIcon(acc.platform)}
                 </div>
-                <div>
-                  <h4 className="font-bold text-sm text-slate-900 dark:text-white truncate">
-                    {acc.name}
-                  </h4>
-                  <span className="text-[11px] text-slate-400 font-mono">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <h4 className="font-bold text-sm text-slate-900 dark:text-white truncate">
+                      {acc.name}
+                    </h4>
+                    {acc.label === 'opposition' && <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300">🔴 विपक्ष</span>}
+                    {acc.label === 'news-media' && <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300">📺 न्यूज़</span>}
+                    {acc.label === 'creator' && <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300">🎬 क्रिएटर</span>}
+                    {acc.label === 'official' && <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">🔵 ऑफिशियल</span>}
+                  </div>
+                  <span className="text-[11px] text-slate-400 font-mono block">
                     @{acc.handle}
                   </span>
                 </div>
@@ -545,10 +553,24 @@ export const SocialMediaReport: React.FC<SocialMediaReportProps> = ({ lang }) =>
                       <div className="p-1 rounded-md bg-white dark:bg-slate-900 shadow-2xs">
                         {getPlatformIcon(post.platform)}
                       </div>
-                      <div>
-                        <span className="text-xs font-bold text-slate-900 dark:text-white block line-clamp-1">
-                          {post.author_name}
-                        </span>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-xs font-bold text-slate-900 dark:text-white block line-clamp-1">
+                            {post.author_name}
+                          </span>
+                          {post.author_label === 'opposition' && (
+                            <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300">🔴 विपक्ष</span>
+                          )}
+                          {post.author_label === 'news-media' && (
+                            <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300">📺 न्यूज़</span>
+                          )}
+                          {post.author_label === 'creator' && (
+                            <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300">🎬 क्रिएटर</span>
+                          )}
+                          {post.author_label === 'official' && (
+                            <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">🔵 ऑफिशियल</span>
+                          )}
+                        </div>
                         <span className="text-[10px] text-slate-400 block font-mono">
                           @{post.author_handle}
                         </span>

@@ -163,6 +163,12 @@ export const LinksExplorer: React.FC<LinksExplorerProps> = ({
             🟢 {lang === 'hi' ? 'पक्ष / समर्थक' : 'Supporter'}
           </span>
         );
+      case 'creator':
+        return (
+          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-300 border border-purple-300 dark:border-purple-800">
+            🎬 {lang === 'hi' ? 'क्रिएटर / रील' : 'Creator / Reel'}
+          </span>
+        );
       case 'news-media':
         return (
           <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 border border-blue-300 dark:border-blue-800">
@@ -172,7 +178,7 @@ export const LinksExplorer: React.FC<LinksExplorerProps> = ({
       default:
         return (
           <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
-            ⚪ {lang === 'hi' ? 'तटस्थ' : 'Neutral'}
+            ⚪ {lang === 'hi' ? 'तटस्थ / आम नागरिक' : 'Neutral / Citizen'}
           </span>
         );
     }
@@ -405,8 +411,10 @@ export const LinksExplorer: React.FC<LinksExplorerProps> = ({
           {[
             { id: '', label: t.stances.all },
             { id: 'opposition', label: t.stances.opposition },
-            { id: 'supporter', label: t.stances.supporter },
-            { id: 'news-media', label: t.stances.newsMedia }
+            { id: 'news-media', label: t.stances.newsMedia },
+            { id: 'creator', label: lang === 'hi' ? '🎬 क्रिएटर / रील' : '🎬 Creator' },
+            { id: 'official', label: lang === 'hi' ? '🔵 आधिकारिक' : '🔵 Official' },
+            { id: 'supporter', label: t.stances.supporter }
           ].map(st => (
             <button
               key={st.id}
