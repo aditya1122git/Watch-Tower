@@ -1,5 +1,12 @@
 import { Post, Comment, Alert, OverviewStats, PlatformRefreshStatus } from './types';
 const getApiBase = (): string => {
+  if (typeof window !== 'undefined' && window.location) {
+    const host = window.location.hostname;
+    const protocol = window.location.protocol || 'http:';
+    if (host === 'localhost' || host === '127.0.0.1') {
+      return `${protocol}//${host}:8000/api/v1`;
+    }
+  }
   let customUrl = import.meta.env.VITE_API_URL;
   if (customUrl) {
     customUrl = customUrl.trim().replace(/\/+$/, '');
@@ -11,7 +18,6 @@ const getApiBase = (): string => {
   if (typeof window !== 'undefined' && window.location) {
     const host = window.location.hostname || 'localhost';
     const protocol = window.location.protocol || 'http:';
-    // If running in production container/Nginx on same port or proxy, use relative /api/v1
     if (window.location.port === '3000') {
       return `${protocol}//${host}:8000/api/v1`;
     }
@@ -515,10 +521,6 @@ export async function loginUser(username: string, password: string): Promise<any
     throw new Error(typeof errorDetail === 'string' ? errorDetail : 'लॉगिन विफल (Login failed)');
   }
 
-  if (body.requires_otp || body.data?.requires_otp) {
-    return { ...body.data, requires_otp: true };
-  }
-
   setStoredSession(body.data);
   return body.data;
 }
@@ -529,7 +531,6 @@ export interface OtpSendResponse {
   role: string;
   masked_phone: string;
   expires_in_seconds: number;
-  demo_otp?: string;
 }
 
 export async function sendLoginOtp(identifier: string, phoneFallback?: string): Promise<OtpSendResponse> {

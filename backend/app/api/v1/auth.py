@@ -121,14 +121,6 @@ async def login(
             )
         raise HTTPException(status_code=401, detail=error_msg)
 
-    if session_data and session_data.get("requires_otp"):
-        return {
-            "status": "otp_required",
-            "requires_otp": True,
-            "message": session_data.get("message"),
-            "data": session_data
-        }
-
     return {
         "status": "success",
         "data": session_data

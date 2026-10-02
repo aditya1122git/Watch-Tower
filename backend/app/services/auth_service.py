@@ -191,52 +191,6 @@ async def login_user(
             logger.warning(f"Login rejected for {username}: Maximum {MAX_CONCURRENT_SESSIONS} concurrent sessions already occupied.")
             return False, None, f"सत्र सीमा पूर्ण: एक समय में अधिकतम {MAX_CONCURRENT_SESSIONS} लॉगिन की अनुमति है। सभी {MAX_CONCURRENT_SESSIONS} स्लॉट उपयोग में हैं।"
 
-    # 2FA ENFORCEMENT: If user has a registered mobile number, dispatch OTP strictly to phone via SMS
-    target_phone = user.phone_number or ("+91 9140407471" if user.username == "admin" else None)
-    if target_phone:
-        clean_target_digits = normalize_phone(target_phone)
-        masked_phone = target_phone
-        if len(clean_target_digits) == 10:
-            masked_phone = f"+91 {clean_target_digits[:4]}****{clean_target_digits[-2:]}"
-
-        otp_code = f"{secrets.randbelow(900000) + 100000}"
-        now = datetime.now(timezone.utc)
-
-        storage_key = user.username.lower()
-        otp_data = {
-            "otp": otp_code,
-            "created_at": now,
-            "attempts": 0,
-            "user_id": user.id,
-            "phone": target_phone,
-            "username": user.username
-        }
-        OTP_STORAGE[storage_key] = otp_data
-        if clean_target_digits:
-            OTP_STORAGE[clean_target_digits] = otp_data
-
-        from app.services.sms_service import sms_service
-        sms_ok, sms_msg, provider, is_live_delivered, gateway_error = await sms_service.send_otp_sms(
-            phone_number=target_phone,
-            otp_code=otp_code,
-            username=user.username
-        )
-        logger.info(f"📱 [2FA PASSWORD LOGIN]: Dispatched OTP to mobile {target_phone} for user '{user.username}' via {provider} (Delivered={is_live_delivered})")
-
-        return True, {
-            "requires_otp": True,
-            "username": user.username,
-            "display_name": user.display_name,
-            "role": user.role,
-            "masked_phone": masked_phone,
-            "sms_provider": provider,
-            "is_live_delivered": is_live_delivered,
-            "delivery_channel": "telegram",
-            "dev_otp": (otp_code if not is_live_delivered else None),
-            "gateway_notice": (gateway_error if not is_live_delivered else None),
-            "message": f"पासवर्ड सत्यापित! 6-अंकों का सुरक्षित OTP आपके Telegram ({masked_phone}) पर भेज दिया गया है।"
-        }, None
-
     # Generate secure 64-char session token
     session_id = secrets.token_urlsafe(40)
     now = datetime.now(timezone.utc)
@@ -633,10 +587,6 @@ async def generate_and_send_otp(
 
     logger.info(f"📱 [SECURE MOBILE SMS OTP]: User '{user.username}' -> Mobile {target_phone} via {provider} (Delivered={is_live_delivered})")
 
-    # In production, NEVER expose dev_otp in HTTP response
-    from app.config import settings
-    expose_dev_otp = bool(settings.DEBUG and settings.ENV != "production")
-
     return True, {
         "username": user.username,
         "display_name": user.display_name,
@@ -646,7 +596,6 @@ async def generate_and_send_otp(
         "sms_provider": provider,
         "is_live_delivered": is_live_delivered,
         "delivery_channel": "telegram",
-        "dev_otp": (otp_code if (not is_live_delivered and expose_dev_otp) else None),
         "gateway_notice": (gateway_error if not is_live_delivered else None),
         "message": f"6-अंकों का सुरक्षित OTP आपके Telegram ({masked_phone}) पर भेज दिया गया है।"
     }, None

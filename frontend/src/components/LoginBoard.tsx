@@ -1,53 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import { Language } from '../i18n';
-import { loginUser, sendLoginOtp, verifyLoginOtp, fetchSessionsStatus, terminateSession } from '../api';
-import { SessionsStatus } from '../types';
+import { loginUser, sendLoginOtp, verifyLoginOtp } from '../api';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faTowerBroadcast, faKey, faPaperPlane, faUser, faLock,
-  faEye, faEyeSlash, faUsers, faTriangleExclamation, faPowerOff,
-  faRotateRight, faShieldHalved, faArrowLeft, faCircleCheck,
-  faMobileScreen, faCircleNotch, faRightToBracket, faCrown,
-  faWandMagicSparkles, faEye as faEyeIcon
+  faEye, faEyeSlash, faShieldHalved, faArrowLeft, faCircleCheck,
+  faMobileScreen, faCircleNotch, faRightToBracket,
+  faEye as faEyeIcon
 } from '@fortawesome/free-solid-svg-icons';
 import { faTelegram } from '@fortawesome/free-brands-svg-icons';
 
 interface LoginBoardProps {
   lang: Language;
   onLoginSuccess: (userData: any) => void;
-  onBypassPreview?: () => void;
 }
 
-export const LoginBoard: React.FC<LoginBoardProps> = ({ lang, onLoginSuccess, onBypassPreview }) => {
+export const LoginBoard: React.FC<LoginBoardProps> = ({ lang, onLoginSuccess }) => {
   const [loginMode, setLoginMode] = useState<'password' | 'otp'>('password');
-  const [username, setUsername] = useState('admin');
-  const [password, setPassword] = useState('Bihar2026@CM');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [sessionsStatus, setSessionsStatus] = useState<SessionsStatus | null>(null);
-  const [showManageSlots, setShowManageSlots] = useState(false);
-  const [terminatingSlotId, setTerminatingSlotId] = useState<string | null>(null);
 
-  const [otpIdentifier, setOtpIdentifier] = useState('admin');
+  const [otpIdentifier, setOtpIdentifier] = useState('');
   const [otpCode, setOtpCode] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [otpLoading, setOtpLoading] = useState(false);
   const [otpCountdown, setOtpCountdown] = useState(0);
   const [maskedPhone, setMaskedPhone] = useState<string | null>(null);
-  const [devOtp, setDevOtp] = useState<string | null>(null);
   const [gatewayNotice, setGatewayNotice] = useState<string | null>(null);
-
-  const loadSlots = async () => {
-    try { const data = await fetchSessionsStatus(); setSessionsStatus(data); }
-    catch (e) { console.error(e); }
-  };
-
-  useEffect(() => {
-    loadSlots();
-    const interval = setInterval(loadSlots, 10000);
-    return () => clearInterval(interval);
-  }, []);
 
   useEffect(() => {
     if (otpCountdown > 0) {
@@ -58,34 +40,27 @@ export const LoginBoard: React.FC<LoginBoardProps> = ({ lang, onLoginSuccess, on
 
   const handleLogin = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    if (!username.trim() || !password) {
+      setErrorMsg(lang === 'hi' ? 'कृपया यूज़र आईडी और पासवर्ड दर्ज करें' : 'Please enter username and password');
+      return;
+    }
     setErrorMsg(null); setLoading(true);
     try {
       const userData = await loginUser(username.trim(), password);
-      if (userData.requires_otp) {
-        setOtpIdentifier(userData.username || username.trim());
-        setMaskedPhone(userData.masked_phone || '+91 9140****71');
-        setOtpSent(true); setOtpCountdown(30);
-        if (userData.dev_otp) setDevOtp(userData.dev_otp);
-        if (userData.gateway_notice) setGatewayNotice(userData.gateway_notice);
-        setLoginMode('otp'); return;
-      }
       onLoginSuccess(userData);
     } catch (err: any) {
       setErrorMsg(err.message || (lang === 'hi' ? 'लॉगिन विफल' : 'Login failed'));
-      await loadSlots();
-      if (err.isLimitExceeded) setShowManageSlots(true);
     } finally { setLoading(false); }
   };
 
   const handleSendOtp = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     const cleanId = otpIdentifier.trim();
-    if (!cleanId) { setErrorMsg(lang === 'hi' ? 'मोबाइल / यूज़रनेम दर्ज करें' : 'Enter mobile or username'); return; }
+    if (!cleanId) { setErrorMsg(lang === 'hi' ? 'मोबाइल नंबर या यूज़र आईडी दर्ज करें' : 'Enter phone number or username'); return; }
     try {
       setOtpLoading(true); setErrorMsg(null);
       const res = await sendLoginOtp(cleanId);
       setOtpSent(true); setMaskedPhone(res.masked_phone);
-      if ((res as any).dev_otp) setDevOtp((res as any).dev_otp);
       if ((res as any).gateway_notice) setGatewayNotice((res as any).gateway_notice);
       setOtpCountdown(30);
     } catch (err: any) { setErrorMsg(err.message || 'OTP send failed'); }
@@ -101,23 +76,8 @@ export const LoginBoard: React.FC<LoginBoardProps> = ({ lang, onLoginSuccess, on
       onLoginSuccess(userData);
     } catch (err: any) {
       setErrorMsg(err.message || 'OTP verification failed');
-      await loadSlots();
-      if (err.isLimitExceeded) setShowManageSlots(true);
     } finally { setLoading(false); }
   };
-
-  const handleTerminateSlot = async (sessionId: string) => {
-    setTerminatingSlotId(sessionId);
-    try {
-      await terminateSession(sessionId); await loadSlots();
-      setErrorMsg(lang === 'hi' ? 'सत्र समाप्त! अब लॉगिन करें।' : 'Session terminated! You may log in now.');
-    } catch (err: any) { setErrorMsg(err.message || 'Termination failed'); }
-    finally { setTerminatingSlotId(null); }
-  };
-
-  const activeCount = sessionsStatus?.active_sessions_count ?? 0;
-  const maxAllowed  = sessionsStatus?.max_concurrent_logins ?? 5;
-  const isFull      = activeCount >= maxAllowed;
 
   /* ── Facebook-style CSS ── */
   const styles = `
@@ -134,45 +94,44 @@ export const LoginBoard: React.FC<LoginBoardProps> = ({ lang, onLoginSuccess, on
       padding: 1.5rem;
     }
 
-    /* ── Hero Title Area ── */
+    /* ── Hero Title Area (Inside Card) ── */
     .fb-hero {
       text-align: center;
-      margin-bottom: 1.5rem;
-      max-width: 500px;
+      margin-bottom: 1.75rem;
     }
     .fb-hero-logo {
-      width: 56px;
-      height: 56px;
-      border-radius: 14px;
-      background: #1877F2;
+      width: 62px;
+      height: 62px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #1877F2 0%, #0d62d1 100%);
       display: flex;
       align-items: center;
       justify-content: center;
-      margin: 0 auto 0.75rem;
-      box-shadow: 0 4px 16px rgba(24, 119, 242, 0.3);
+      margin: 0 auto 0.85rem;
+      box-shadow: 0 8px 24px rgba(24, 119, 242, 0.32);
     }
     .fb-hero h1 {
       color: #1877F2;
-      font-size: 1.75rem;
+      font-size: 1.85rem;
       font-weight: 700;
       margin: 0 0 0.35rem;
       letter-spacing: -0.02em;
     }
     .fb-hero p {
       color: #606770;
-      font-size: 0.95rem;
+      font-size: 0.88rem;
       margin: 0;
-      line-height: 1.5;
+      line-height: 1.45;
     }
 
     /* ── Main Card ── */
     .fb-card {
       width: 100%;
-      max-width: 396px;
+      max-width: 480px;
       background: #fff;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1), 0 8px 16px rgba(0,0,0,0.1);
-      padding: 1.25rem 1rem;
+      border-radius: 18px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 20px 40px -8px rgba(0, 0, 0, 0.12);
+      padding: 2.5rem 2.25rem 2.25rem;
       animation: fb-rise 0.35s ease both;
     }
 
@@ -519,13 +478,13 @@ export const LoginBoard: React.FC<LoginBoardProps> = ({ lang, onLoginSuccess, on
     }
 
     /* ── Responsive ── */
-    @media (max-width: 500px) {
+    @media (max-width: 520px) {
       .fb-card {
-        padding: 1rem 0.85rem;
+        padding: 1.75rem 1.25rem;
         max-width: 100%;
       }
       .fb-hero h1 {
-        font-size: 1.35rem;
+        font-size: 1.5rem;
       }
     }
   `;
@@ -540,104 +499,20 @@ export const LoginBoard: React.FC<LoginBoardProps> = ({ lang, onLoginSuccess, on
 
       <div className="fb-shell">
 
-        {/* ── HERO ── */}
-        <div className="fb-hero">
-          <div className="fb-hero-logo">
-            <Fa icon={faTowerBroadcast} style={{ fontSize: '1.5rem', color: '#fff' }} />
-          </div>
-          <h1>{lang === 'hi' ? 'सोशल वॉचटावर' : 'Social Watchtower'}</h1>
-          <p>{lang === 'hi' ? 'CM वॉर रूम — बिहार सरकार • जनमत निगरानी प्रणाली' : 'CM War Room — Government of Bihar • Public Opinion Intel'}</p>
-        </div>
-
         {/* ── MAIN CARD ── */}
         <div className="fb-card">
 
-          {/* Session Badge */}
-          <div className="fb-session-badge">
-            <span className={`fb-session-dot ${isFull ? 'red' : 'green'}`} />
-            <span>
-              {activeCount} / {maxAllowed} {lang === 'hi' ? 'सक्रिय सत्र' : 'Active Sessions'}
-            </span>
+          {/* ── HERO / LOGO INSIDE CARD ── */}
+          <div className="fb-hero">
+            <div className="fb-hero-logo">
+              <Fa icon={faTowerBroadcast} style={{ fontSize: '1.6rem', color: '#fff' }} />
+            </div>
+            <h1>{lang === 'hi' ? 'सोशल वॉचटावर' : 'Social Watchtower'}</h1>
+            <p>{lang === 'hi' ? 'CM वॉर रूम — बिहार सरकार • जनमत निगरानी प्रणाली' : 'CM War Room — Government of Bihar • Public Opinion Intel'}</p>
           </div>
-
-          {/* Slot Bar */}
-          <div className="fb-slot-bar">
-            <span className="fb-slot-label">
-              <Fa icon={faUsers} style={{ fontSize: '0.72rem' }} />
-              {lang === 'hi' ? '5 स्लॉट:' : '5 Slots:'}
-            </span>
-            <div className="fb-slots">
-              {Array.from({ length: 5 }).map((_, i) => {
-                const occ = i < activeCount;
-                return (
-                  <div key={i} className={`fb-slot ${occ ? 'occupied' : 'free'}`} title={`Slot #${i + 1}: ${occ ? 'Occupied' : 'Free'}`}>
-                    #{i + 1}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Session Full Alert */}
-          {isFull && (
-            <div className="fb-alert-full">
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5 }}>
-                <Fa icon={faTriangleExclamation} style={{ color: '#c4302b', fontSize: '0.85rem' }} />
-                <span style={{ color: '#c4302b', fontWeight: 700, fontSize: '0.85rem' }}>
-                  {lang === 'hi' ? 'सत्र सीमा पूर्ण' : 'Session Limit Reached'}
-                </span>
-              </div>
-              <p style={{ color: '#c4302b', fontSize: '0.78rem', marginBottom: 8 }}>
-                {lang === 'hi' ? 'सभी 5 स्लॉट उपयोग में हैं।' : 'All 5 slots occupied.'}
-              </p>
-              <button onClick={() => setShowManageSlots(!showManageSlots)} style={{
-                background: '#c4302b', color: '#fff', border: 'none', borderRadius: 6,
-                padding: '5px 14px', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer',
-                display: 'inline-flex', alignItems: 'center', gap: 6,
-              }}>
-                <Fa icon={faPowerOff} style={{ fontSize: '0.65rem' }} />
-                {showManageSlots ? (lang === 'hi' ? 'छिपाएं' : 'Hide') : (lang === 'hi' ? 'स्लॉट मैनेज करें' : 'Manage Slots')}
-              </button>
-            </div>
-          )}
-
-          {/* Slots Manager */}
-          {showManageSlots && sessionsStatus && (
-            <div className="fb-sessions-panel">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                <span style={{ color: '#1d2129', fontWeight: 700, fontSize: '0.82rem' }}>
-                  {lang === 'hi' ? 'सक्रिय सत्र' : 'Active Sessions'}
-                </span>
-                <button onClick={loadSlots} style={{ background: 'none', border: 'none', color: '#8a8d91', cursor: 'pointer', fontSize: '0.8rem' }}>
-                  <Fa icon={faRotateRight} />
-                </button>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 160, overflowY: 'auto' }}>
-                {sessionsStatus.slots.filter(s => s.is_occupied).map(slot => (
-                  <div key={slot.slot_number} className="fb-session-row">
-                    <div>
-                      <div style={{ color: '#1d2129', fontWeight: 700, fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span style={{ width: 18, height: 18, borderRadius: '50%', background: '#c4302b', color: '#fff', fontSize: '0.6rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900 }}>{slot.slot_number}</span>
-                        {slot.display_name}
-                      </div>
-                      <div style={{ color: '#8a8d91', fontSize: '0.7rem', marginTop: 2 }}>{slot.device_info} • {slot.ip_address}</div>
-                    </div>
-                    {slot.session_id && (
-                      <button onClick={() => handleTerminateSlot(slot.session_id!)} disabled={terminatingSlotId === slot.session_id} style={{
-                        background: '#ffebe9', border: '1px solid #ffc1c0', borderRadius: 6,
-                        color: '#c4302b', fontSize: '0.7rem', fontWeight: 700, padding: '4px 12px', cursor: 'pointer',
-                      }}>
-                        {terminatingSlotId === slot.session_id ? '...' : (lang === 'hi' ? 'खाली करें' : 'End')}
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
 
           {/* Error */}
-          {errorMsg && !isFull && (
+          {errorMsg && (
             <div className="fb-alert-error">
               <Fa icon={faShieldHalved} style={{ color: '#c4302b' }} />
               <span>{errorMsg}</span>
@@ -662,43 +537,45 @@ export const LoginBoard: React.FC<LoginBoardProps> = ({ lang, onLoginSuccess, on
 
           {/* ── PASSWORD FORM ── */}
           {loginMode === 'password' && (
-            <form onSubmit={handleLogin}>
+            <form onSubmit={handleLogin} autoComplete="off">
               <div className="fb-input-group">
                 <span className="fb-input-icon"><Fa icon={faUser} /></span>
                 <input
-                  type="text" required value={username} onChange={e => setUsername(e.target.value)}
+                  type="text"
+                  required
+                  value={username}
+                  onChange={e => setUsername(e.target.value)}
                   placeholder={lang === 'hi' ? 'यूज़र आईडी दर्ज करें' : 'Username'}
                   className="fb-input"
+                  autoComplete="off"
+                  name="custom_user_id"
                 />
               </div>
 
               <div className="fb-input-group">
                 <span className="fb-input-icon"><Fa icon={faLock} /></span>
                 <input
-                  type={showPassword ? 'text' : 'password'} required value={password}
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  value={password}
                   onChange={e => setPassword(e.target.value)}
                   placeholder={lang === 'hi' ? 'पासवर्ड दर्ज करें' : 'Password'}
                   className="fb-input"
                   style={{ paddingRight: '2.8rem' }}
+                  autoComplete="off"
+                  name="custom_user_secret"
                 />
                 <button type="button" onClick={() => setShowPassword(v => !v)} className="fb-pass-toggle">
                   <Fa icon={showPassword ? faEyeSlash : faEye} />
                 </button>
               </div>
 
-              <button type="submit" disabled={loading || (isFull && !showManageSlots)} className="fb-btn-primary">
+              <button type="submit" disabled={loading} className="fb-btn-primary">
                 {loading
                   ? <span className="fb-spin"><Fa icon={faCircleNotch} /></span>
                   : <><Fa icon={faRightToBracket} />{lang === 'hi' ? 'लॉग इन करें' : 'Log In'}</>
                 }
               </button>
-
-              {/* Telegram hint */}
-              <div className="fb-alert-info" style={{ marginTop: '0.75rem', marginBottom: 0 }}>
-                <Fa icon={faTelegram} style={{ fontSize: '1rem', color: '#1877F2' }} />
-                {lang === 'hi' ? 'पासवर्ड के बाद Telegram OTP आएगा।' : 'A Telegram OTP follows password verification.'}
-              </div>
-
             </form>
           )}
 
@@ -706,14 +583,18 @@ export const LoginBoard: React.FC<LoginBoardProps> = ({ lang, onLoginSuccess, on
           {loginMode === 'otp' && (
             <div>
               {!otpSent ? (
-                <form onSubmit={handleSendOtp}>
+                <form onSubmit={handleSendOtp} autoComplete="off">
                   <div className="fb-input-group">
                     <span className="fb-input-icon"><Fa icon={faMobileScreen} /></span>
                     <input
-                      type="text" required value={otpIdentifier}
+                      type="text"
+                      required
+                      value={otpIdentifier}
                       onChange={e => setOtpIdentifier(e.target.value)}
-                      placeholder={lang === 'hi' ? 'नंबर या admin' : 'Phone number or admin'}
+                      placeholder={lang === 'hi' ? 'मोबाइल नंबर या यूज़र आईडी' : 'Phone number or username'}
                       className="fb-input"
+                      autoComplete="off"
+                      name="custom_otp_id"
                     />
                   </div>
 
@@ -722,7 +603,7 @@ export const LoginBoard: React.FC<LoginBoardProps> = ({ lang, onLoginSuccess, on
                     {lang === 'hi' ? 'OTP आपके Telegram bot पर आएगा।' : 'OTP will be sent to your Telegram bot.'}
                   </div>
 
-                  <button type="submit" disabled={otpLoading || (isFull && !showManageSlots)} className="fb-btn-primary">
+                  <button type="submit" disabled={otpLoading} className="fb-btn-primary">
                     {otpLoading
                       ? <span className="fb-spin"><Fa icon={faCircleNotch} /></span>
                       : <><Fa icon={faTelegram} />{lang === 'hi' ? 'OTP भेजें' : 'Send OTP'}</>
@@ -732,7 +613,7 @@ export const LoginBoard: React.FC<LoginBoardProps> = ({ lang, onLoginSuccess, on
               ) : (
                 <form onSubmit={handleVerifyOtp}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.9rem' }}>
-                    <button type="button" onClick={() => { setOtpSent(false); setOtpCode(''); setDevOtp(null); setGatewayNotice(null); }}
+                    <button type="button" onClick={() => { setOtpSent(false); setOtpCode(''); setGatewayNotice(null); }}
                       style={{ background: 'none', border: 'none', color: '#8a8d91', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 5 }}
                     >
                       <Fa icon={faArrowLeft} style={{ fontSize: '0.72rem' }} />
@@ -756,25 +637,6 @@ export const LoginBoard: React.FC<LoginBoardProps> = ({ lang, onLoginSuccess, on
                     </div>
                   )}
 
-                  {devOtp && (
-                    <div className="fb-dev-otp-box">
-                      {gatewayNotice && <p style={{ color: '#8a6d3b', fontSize: '0.72rem', marginBottom: 8 }}>⚠️ {gatewayNotice}</p>}
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#fff', borderRadius: 6, padding: '0.5rem 0.75rem', border: '1px solid #ffd699' }}>
-                        <div>
-                          <div style={{ color: '#8a8d91', fontSize: '0.65rem', textTransform: 'uppercase', fontWeight: 700 }}>Dev OTP</div>
-                          <div style={{ color: '#c4302b', fontWeight: 900, fontFamily: 'monospace', fontSize: '1.4rem', letterSpacing: '0.25em' }}>{devOtp}</div>
-                        </div>
-                        <button type="button" onClick={() => setOtpCode(devOtp)} style={{
-                          background: '#1877F2', color: '#fff', border: 'none', borderRadius: 6,
-                          padding: '6px 16px', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer',
-                          display: 'flex', alignItems: 'center', gap: 6,
-                        }}>
-                          <Fa icon={faWandMagicSparkles} style={{ fontSize: '0.72rem' }} /> Autofill
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
                   <div className="fb-input-group" style={{ marginBottom: '1rem' }}>
                     <label style={{ display: 'block', color: '#606770', fontSize: '0.75rem', fontWeight: 600, marginBottom: 6, textAlign: 'center' }}>
                       {lang === 'hi' ? '6-अंकों का OTP' : '6-Digit OTP Code'}
@@ -790,7 +652,7 @@ export const LoginBoard: React.FC<LoginBoardProps> = ({ lang, onLoginSuccess, on
                     </div>
                   </div>
 
-                  <button type="submit" disabled={loading || otpCode.length < 4 || (isFull && !showManageSlots)} className="fb-btn-green" style={{ marginBottom: '0.75rem' }}>
+                  <button type="submit" disabled={loading || otpCode.length < 4} className="fb-btn-green" style={{ marginBottom: '0.75rem' }}>
                     {loading
                       ? <span className="fb-spin"><Fa icon={faCircleNotch} /></span>
                       : <><Fa icon={faCircleCheck} />{lang === 'hi' ? 'सत्यापित करें' : 'Verify & Enter'}</>
@@ -816,27 +678,8 @@ export const LoginBoard: React.FC<LoginBoardProps> = ({ lang, onLoginSuccess, on
             </div>
           )}
 
-          {/* Guest bypass */}
-          {onBypassPreview && (
-            <>
-              <div className="fb-divider">
-                <div className="fb-divider-line" />
-                <span className="fb-divider-text">{lang === 'hi' ? 'या' : 'or'}</span>
-                <div className="fb-divider-line" />
-              </div>
-              <div style={{ textAlign: 'center' }}>
-                <button type="button" onClick={onBypassPreview} className="fb-btn-green" style={{ fontSize: '0.9rem', padding: '0.65rem 1rem' }}>
-                  <Fa icon={faEye} style={{ fontSize: '0.78rem' }} />
-                  {lang === 'hi' ? 'डेमो मोड में देखें' : 'Preview as Guest'}
-                </button>
-              </div>
-            </>
-          )}
 
-          {/* Footer */}
-          <div className="fb-footer">
-            Bihar Government • Max 5 Concurrent Sessions
-          </div>
+
         </div>
       </div>
     </>

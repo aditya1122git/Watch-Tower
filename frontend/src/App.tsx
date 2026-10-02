@@ -70,7 +70,7 @@ export const App: React.FC = () => {
         const user = await fetchCurrentUser();
         if (user) {
           setCurrentUser(user);
-        } else if (currentUser && currentUser.username !== 'guest') {
+        } else if (currentUser) {
           setCurrentUser(null);
         }
         const sessions = await fetchSessionsStatus();
@@ -210,14 +210,6 @@ export const App: React.FC = () => {
         onLoginSuccess={(userData) => {
           setCurrentUser(userData);
           setActiveSessionsCount(userData.active_sessions_count || 1);
-          loadData();
-        }}
-        onBypassPreview={() => {
-          setCurrentUser({
-            username: 'guest',
-            display_name: 'Guest Observer (अतिथि)',
-            role: 'viewer'
-          });
           loadData();
         }}
       />
